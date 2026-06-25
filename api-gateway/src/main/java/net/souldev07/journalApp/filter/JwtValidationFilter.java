@@ -10,15 +10,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
 import net.souldev07.journalApp.utils.JwtUtil;
 import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class JwtValidationFilter implements GlobalFilter {
+public class JwtValidationFilter implements GlobalFilter, Ordered {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Override
+    public int getOrder() {
+        return -2;
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
