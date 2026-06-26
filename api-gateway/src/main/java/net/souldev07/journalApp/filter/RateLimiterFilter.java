@@ -30,12 +30,16 @@ public class RateLimiterFilter implements GlobalFilter, Ordered {
         String path = exchange.getRequest().getURI().getPath();
 
         int limit = MAX_REQUESTS_PER_MINUTE;
-        if (path.startsWith("/public/login"))
+        String category = "default";
+        if (path.startsWith("/public/login")) {
             limit = 5;
-        else if (path.startsWith("/journal"))
+            category = "login";
+        } else if (path.startsWith("/journal")) {
             limit = 30;
+            category = "journal";
+        }
 
-        String key = "rate:" + clientId + ":" + currentMinuteKey();
+        String key = "rate:" + clientId + ":" + category + ":" + currentMinuteKey();
 
         Long count = redisTemplate.opsForValue().increment(key);
 

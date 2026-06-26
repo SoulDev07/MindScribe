@@ -1,0 +1,112 @@
+package net.souldev07.journalApp.service;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.web.client.RestTemplate;
+
+import net.souldev07.journalApp.api.response.WeatherResponse;
+import net.souldev07.journalApp.cache.AppCache;
+import net.souldev07.journalApp.component.AuditPublisher;
+import net.souldev07.journalApp.model.AuditEvent;
+import net.souldev07.journalApp.model.JournalEntryEvent;
+import net.souldev07.journalApp.model.SentimentData;
+import net.souldev07.journalApp.repository.ConfigJournalAppRepository;
+import net.souldev07.journalApp.repository.JournalEntryRepository;
+
+@SpringBootTest(properties = {
+        "weather.api.key=dummy_key",
+        "eureka.client.enabled=false",
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration"
+})
+public class WeatherServiceTest {
+
+    @Autowired
+    private WeatherService weatherService;
+
+    @MockBean
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private RedisService redisService;
+
+    @MockBean
+    private AppCache appCache;
+
+    @MockBean
+    private JournalEntryRepository journalEntryRepository;
+
+    @MockBean
+    private ConfigJournalAppRepository configJournalAppRepository;
+
+    @MockBean
+    private KafkaTemplate<String, JournalEntryEvent> entryKafkaTemplate;
+
+    @MockBean
+    private KafkaTemplate<String, SentimentData> sentimentKafkaTemplate;
+
+    @MockBean
+    private KafkaTemplate<String, AuditEvent> auditKafkaTemplate;
+
+    @MockBean
+    private AuditPublisher auditPublisher;
+
+    @MockBean
+    private JavaMailSender mailSender;
+
+    @BeforeEach
+    public void setUp() {
+        Map<String, String> cacheMap = new HashMap<>();
+        cacheMap.put("WEATHER_API", "http://dummy-weather-api.com/city={city}&key={api_key}");
+        appCache.appCache = cacheMap;
+        redisService.set("weather_of_Mumbai", null, 1L);
+    }
+
+    @Test
+    public void testWeatherApiFallbackAndRetry() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(WeatherResponse.class)))
+                .thenThrow(new RuntimeException("API error"));
+
+        WeatherResponse response = weatherService.getWeather("Mumbai");
+        assertNull(response);
+
+        verify(restTemplate, times(3)).exchange(anyString(), eq(HttpMethod.GET), any(), eq(WeatherResponse.class));
+    }
+
+    @Test
+    public void testWeatherApiCaching() {
+        WeatherResponse mockResponse = new WeatherResponse();
+        WeatherResponse.Main main = new WeatherResponse.Main();
+        main.setFeelsLike(28.0);
+        mockResponse.setMain(main);
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(WeatherResponse.class)))
+                .thenReturn(ResponseEntity.ok(mockResponse));
+
+        WeatherResponse response1 = weatherService.getWeather("Mumbai");
+        assertNotNull(response1);
+
+        WeatherResponse response2 = weatherService.getWeather("Mumbai");
+        assertNotNull(response2);
+
+        verify(restTemplate, times(1)).exchange(anyString(), eq(HttpMethod.GET), any(), eq(WeatherResponse.class));
+    }
+}
