@@ -43,8 +43,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Sentiment Analysis Service",
-    description="NLP emotion analysis using HuggingFace DistilRoBERTa",
+    title="MindScribe Sentiment Analysis Service",
+    description="MindScribe NLP emotion & sentiment analysis using HuggingFace DistilRoBERTa",
     lifespan=lifespan,
 )
 

@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>net.souldev07</groupId>
-        <artifactId>journalApp-platform</artifactId>
+        <artifactId>mindscribe-platform</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>

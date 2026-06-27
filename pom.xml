@@ -12,11 +12,11 @@
     </parent>
 
     <groupId>net.souldev07</groupId>
-    <artifactId>journalApp-platform</artifactId>
+    <artifactId>mindscribe-platform</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Journal App Platform</name>
-    <description>E2EE Journal App Platform</description>
+    <name>MindScribe</name>
+    <description>MindScribe Microservices Platform</description>
 
     <modules>
         <module>eureka-server</module>
