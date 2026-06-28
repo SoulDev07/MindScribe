@@ -3,7 +3,13 @@ package net.souldev07.mindscribe.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
-
+import net.souldev07.mindscribe.cache.AppCache;
+import net.souldev07.mindscribe.component.AuditPublisher;
+import net.souldev07.mindscribe.entity.JournalEntry;
+import net.souldev07.mindscribe.model.AuditEvent;
+import net.souldev07.mindscribe.model.JournalEntryEvent;
+import net.souldev07.mindscribe.model.SentimentData;
+import net.souldev07.mindscribe.repository.JournalEntryRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,13 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
-
-import net.souldev07.mindscribe.component.AuditPublisher;
-import net.souldev07.mindscribe.entity.JournalEntry;
-import net.souldev07.mindscribe.model.AuditEvent;
-import net.souldev07.mindscribe.model.JournalEntryEvent;
-import net.souldev07.mindscribe.model.SentimentData;
-import net.souldev07.mindscribe.repository.JournalEntryRepository;
 
 @SpringBootTest(properties = {
         "eureka.client.enabled=false",
@@ -46,6 +45,9 @@ public class JournalEntryServiceTest {
 
     @MockBean
     private JavaMailSender mailSender;
+
+    @MockBean
+    private AppCache appCache;
 
     private static final String TEST_USER = "integration_test_user";
 

@@ -8,8 +8,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Map;
-
+import net.souldev07.mindscribe.component.AuditPublisher;
+import net.souldev07.mindscribe.model.AuditEvent;
+import net.souldev07.mindscribe.model.JournalEntryEvent;
+import net.souldev07.mindscribe.model.SentimentData;
+import net.souldev07.mindscribe.repository.ConfigJournalAppRepository;
+import net.souldev07.mindscribe.repository.JournalEntryRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,13 +21,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.client.RestTemplate;
-
-import net.souldev07.mindscribe.component.AuditPublisher;
-import net.souldev07.mindscribe.model.AuditEvent;
-import net.souldev07.mindscribe.model.JournalEntryEvent;
-import net.souldev07.mindscribe.model.SentimentData;
-import net.souldev07.mindscribe.repository.ConfigJournalAppRepository;
-import net.souldev07.mindscribe.repository.JournalEntryRepository;
 
 @SpringBootTest(properties = {
         "eureka.client.enabled=false",
@@ -60,12 +57,12 @@ public class SentimentServiceTest {
 
     @Test
     public void testSentimentServiceFallback() {
-        when(restTemplate.postForObject(anyString(), any(), eq(Map.class)))
+        when(restTemplate.postForObject(anyString(), any(), eq(SentimentService.SentimentAnalysisResponse.class)))
                 .thenThrow(new RuntimeException("API error"));
 
         String response = sentimentService.analyzeSentiment("entry123", "user123", "content");
         assertNull(response);
 
-        verify(restTemplate, times(1)).postForObject(anyString(), any(), eq(Map.class));
+        verify(restTemplate, times(1)).postForObject(anyString(), any(), eq(SentimentService.SentimentAnalysisResponse.class));
     }
 }

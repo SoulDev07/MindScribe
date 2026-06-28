@@ -9,11 +9,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.extern.slf4j.Slf4j;
 import net.souldev07.mindscribe.cache.AppCache;
 import net.souldev07.mindscribe.entity.JournalEntry;
 import net.souldev07.mindscribe.entity.User;
@@ -23,6 +25,7 @@ import net.souldev07.mindscribe.repository.JournalEntryRepository;
 import net.souldev07.mindscribe.service.EmailService;
 
 @Component
+@Slf4j
 public class UserScheduler {
 
     @Autowired
@@ -40,11 +43,16 @@ public class UserScheduler {
     @Autowired
     private KafkaTemplate<String, SentimentData> kafkaTemplate;
 
+    @Value("${auth.service.url:http://AUTH-SERVICE}")
+    private String authServiceUrl;
+
     @Scheduled(cron = "0 0 9 * * SUN")
     public void fetchUsersAndSendSaMail() {
         try {
-            User[] usersArray = restTemplate.getForObject("http://AUTH-SERVICE/internal/users/sentiment-analysis", User[].class);
-            if (usersArray == null) return;
+            User[] usersArray = restTemplate.getForObject(authServiceUrl + "/internal/users/sentiment-analysis", User[].class);
+            if (usersArray == null) {
+                return;
+            }
             List<User> users = Arrays.asList(usersArray);
 
             for (User user : users) {
@@ -57,7 +65,9 @@ public class UserScheduler {
 
                 Map<Sentiment, Integer> counts = new HashMap<>();
                 for (Sentiment s : sentiments) {
-                    if (s != null) counts.put(s, counts.getOrDefault(s, 0) + 1);
+                    if (s != null) {
+                        counts.put(s, counts.getOrDefault(s, 0) + 1);
+                    }
                 }
 
                 Sentiment top = null;
@@ -77,12 +87,13 @@ public class UserScheduler {
                     try {
                         kafkaTemplate.send("weekly-sentiments", data.getEmail(), data);
                     } catch (Exception kafkaEx) {
+                        log.error("Error sending sentiment data to Kafka for user {}: ", user.getEmail(), kafkaEx);
                         emailService.sendEmail(data.getEmail(), "Sentiment", data.getSentiment());
                     }
                 }
             }
         } catch (Exception ex) {
-            // handle rest template connection errors gracefully during boot
+            log.error("Error executing weekly sentiment scheduler: ", ex);
         }
     }
 

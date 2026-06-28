@@ -11,10 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import net.souldev07.mindscribe.component.AuditPublisher;
 import net.souldev07.mindscribe.entity.JournalEntry;
+import net.souldev07.mindscribe.enums.Sentiment;
 import net.souldev07.mindscribe.model.JournalEntryEvent;
 import net.souldev07.mindscribe.repository.JournalEntryRepository;
 
@@ -72,8 +74,52 @@ public class JournalEntryService {
         return journalEntryRepository.findAll();
     }
 
+    public List<JournalEntry> getEntriesByUsername(String username) {
+        return journalEntryRepository.findByUserName(username);
+    }
+
     public Optional<JournalEntry> findById(ObjectId id) {
         return journalEntryRepository.findById(id);
+    }
+
+    @Transactional
+    public Optional<JournalEntry> updateJournalEntryById(ObjectId id, JournalEntry newEntry, String username) {
+        Optional<JournalEntry> journalEntryOpt = journalEntryRepository.findById(id);
+        if (journalEntryOpt.isPresent() && journalEntryOpt.get().getUserName().equals(username)) {
+            JournalEntry old = journalEntryOpt.get();
+            if (newEntry.getTitle() != null && StringUtils.hasText(newEntry.getTitle())) {
+                old.setTitle(newEntry.getTitle());
+            }
+            if (newEntry.getContent() != null && StringUtils.hasText(newEntry.getContent())) {
+                old.setContent(newEntry.getContent());
+            }
+            journalEntryRepository.save(old);
+            return Optional.of(old);
+        }
+        return Optional.empty();
+    }
+
+    @Transactional
+    public boolean updateSentiment(ObjectId id, String sentiment) {
+        if (id == null || !StringUtils.hasText(sentiment)) {
+            return false;
+        }
+        Optional<JournalEntry> entryOpt = journalEntryRepository.findById(id);
+        if (entryOpt.isPresent()) {
+            JournalEntry entry = entryOpt.get();
+            entry.setSentiment(Sentiment.valueOf(sentiment.toUpperCase()));
+            journalEntryRepository.save(entry);
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional
+    public boolean updateSentiment(String id, String sentiment) {
+        if (!StringUtils.hasText(id)) {
+            return false;
+        }
+        return updateSentiment(new ObjectId(id), sentiment);
     }
 
     @Transactional

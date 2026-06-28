@@ -1,21 +1,23 @@
 package net.souldev07.mindscribe.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
-
+import java.util.Collections;
+import net.souldev07.mindscribe.entity.AuditEventEntity;
+import net.souldev07.mindscribe.repository.AuditEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
-
-import net.souldev07.mindscribe.entity.AuditEventEntity;
-import net.souldev07.mindscribe.repository.AuditEventRepository;
 
 @SpringBootTest(properties = {
         "eureka.client.enabled=false",
@@ -36,8 +38,8 @@ public class AuditControllerTest {
         event.setService("AUTH-SERVICE");
         event.setAction("USER_CREATED");
 
-        when(repository.findByServiceAndAction("AUTH-SERVICE", "USER_CREATED"))
-                .thenReturn(Arrays.asList(event));
+        when(repository.findByServiceAndAction(eq("AUTH-SERVICE"), eq("USER_CREATED"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.singletonList(event)));
 
         mockMvc.perform(get("/audit/events")
                 .param("service", "AUTH-SERVICE")

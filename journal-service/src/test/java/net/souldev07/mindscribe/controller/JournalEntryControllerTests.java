@@ -9,8 +9,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Arrays;
-
+import net.souldev07.mindscribe.cache.AppCache;
+import net.souldev07.mindscribe.component.AuditPublisher;
+import net.souldev07.mindscribe.entity.JournalEntry;
+import net.souldev07.mindscribe.model.AuditEvent;
+import net.souldev07.mindscribe.model.JournalEntryEvent;
+import net.souldev07.mindscribe.model.SentimentData;
+import net.souldev07.mindscribe.repository.JournalEntryRepository;
+import net.souldev07.mindscribe.service.JournalEntryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,16 +28,6 @@ import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.web.servlet.MockMvc;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import net.souldev07.mindscribe.component.AuditPublisher;
-import net.souldev07.mindscribe.entity.JournalEntry;
-import net.souldev07.mindscribe.model.AuditEvent;
-import net.souldev07.mindscribe.model.JournalEntryEvent;
-import net.souldev07.mindscribe.model.SentimentData;
-import net.souldev07.mindscribe.repository.JournalEntryRepository;
-import net.souldev07.mindscribe.service.JournalEntryService;
 
 @SpringBootTest(properties = {
         "eureka.client.enabled=false",
@@ -65,13 +63,16 @@ public class JournalEntryControllerTests {
     @MockBean
     private JavaMailSender mailSender;
 
+    @MockBean
+    private AppCache appCache;
+
     @Test
     public void testGetAllJournalEntriesSuccess() throws Exception {
         JournalEntry entry = new JournalEntry();
         entry.setTitle("Test Title");
         entry.setUserName("test_user");
 
-        when(journalEntryRepository.findByUserName("test_user")).thenReturn(Arrays.asList(entry));
+        when(journalEntryService.getEntriesByUsername("test_user")).thenReturn(Arrays.asList(entry));
 
         mockMvc.perform(get("/journal")
                 .header("X-User-Id", "test_user"))

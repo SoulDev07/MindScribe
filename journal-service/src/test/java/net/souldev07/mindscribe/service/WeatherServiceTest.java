@@ -11,7 +11,14 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import net.souldev07.mindscribe.api.response.WeatherResponse;
+import net.souldev07.mindscribe.cache.AppCache;
+import net.souldev07.mindscribe.component.AuditPublisher;
+import net.souldev07.mindscribe.model.AuditEvent;
+import net.souldev07.mindscribe.model.JournalEntryEvent;
+import net.souldev07.mindscribe.model.SentimentData;
+import net.souldev07.mindscribe.repository.ConfigJournalAppRepository;
+import net.souldev07.mindscribe.repository.JournalEntryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +29,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.client.RestTemplate;
-
-import net.souldev07.mindscribe.api.response.WeatherResponse;
-import net.souldev07.mindscribe.cache.AppCache;
-import net.souldev07.mindscribe.component.AuditPublisher;
-import net.souldev07.mindscribe.model.AuditEvent;
-import net.souldev07.mindscribe.model.JournalEntryEvent;
-import net.souldev07.mindscribe.model.SentimentData;
-import net.souldev07.mindscribe.repository.ConfigJournalAppRepository;
-import net.souldev07.mindscribe.repository.JournalEntryRepository;
 
 @SpringBootTest(properties = {
         "weather.api.key=dummy_key",
@@ -45,7 +43,7 @@ public class WeatherServiceTest {
     @MockBean
     private RestTemplate restTemplate;
 
-    @Autowired
+    @MockBean
     private RedisService redisService;
 
     @MockBean
@@ -77,11 +75,11 @@ public class WeatherServiceTest {
         Map<String, String> cacheMap = new HashMap<>();
         cacheMap.put("WEATHER_API", "http://dummy-weather-api.com/city={city}&key={api_key}");
         appCache.appCache = cacheMap;
-        redisService.set("weather_of_Mumbai", null, 1L);
     }
 
     @Test
     public void testWeatherApiFallbackAndRetry() {
+        when(redisService.get(anyString(), eq(WeatherResponse.class))).thenReturn(null);
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(WeatherResponse.class)))
                 .thenThrow(new RuntimeException("API error"));
 
@@ -97,6 +95,10 @@ public class WeatherServiceTest {
         WeatherResponse.Main main = new WeatherResponse.Main();
         main.setFeelsLike(28.0);
         mockResponse.setMain(main);
+
+        when(redisService.get(eq("weather_of_Mumbai"), eq(WeatherResponse.class)))
+                .thenReturn(null)
+                .thenReturn(mockResponse);
 
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(WeatherResponse.class)))
                 .thenReturn(ResponseEntity.ok(mockResponse));

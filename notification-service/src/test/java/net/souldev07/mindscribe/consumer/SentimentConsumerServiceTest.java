@@ -3,14 +3,13 @@ package net.souldev07.mindscribe.consumer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import net.souldev07.mindscribe.model.SentimentData;
+import net.souldev07.mindscribe.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mail.javamail.JavaMailSender;
-
-import net.souldev07.mindscribe.model.SentimentData;
-import net.souldev07.mindscribe.service.EmailService;
 
 @SpringBootTest(properties = {
         "eureka.client.enabled=false",

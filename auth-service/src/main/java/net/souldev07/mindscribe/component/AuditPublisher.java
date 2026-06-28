@@ -33,10 +33,15 @@ public class AuditPublisher {
                     .details(details)
                     .build();
 
-            kafkaTemplate.send("audit-log", serviceName, event);
-            log.info("Published audit event: {} - {}", action, resourceId);
+            kafkaTemplate.send("audit-log", serviceName, event).completable().whenComplete((result, ex) -> {
+                if (ex != null) {
+                    log.error("Failed to publish audit event for action: {}, resourceId: {}", action, resourceId, ex);
+                } else {
+                    log.info("Published audit event: {} - {}", action, resourceId);
+                }
+            });
         } catch (Exception e) {
-            log.error("Failed to publish audit event: ", e);
+            log.error("Failed to initiate audit event publishing: ", e);
         }
     }
 }

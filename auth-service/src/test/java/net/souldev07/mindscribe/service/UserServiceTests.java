@@ -4,16 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import net.souldev07.mindscribe.component.AuditPublisher;
+import net.souldev07.mindscribe.entity.User;
+import net.souldev07.mindscribe.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-
-import net.souldev07.mindscribe.component.AuditPublisher;
-import net.souldev07.mindscribe.entity.User;
-import net.souldev07.mindscribe.repository.UserRepository;
 
 @SpringBootTest(properties = {
         "eureka.client.enabled=false",

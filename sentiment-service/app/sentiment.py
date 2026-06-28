@@ -17,13 +17,17 @@ LABEL_MAP = {
 class SentimentAnalyzer:
     def __init__(self):
         logger.info("Loading HuggingFace sentiment model...")
-        self.classifier = pipeline("sentiment-analysis", model="j-hartmann/emotion-english-distilroberta-base")
+        self.classifier = pipeline(
+            "sentiment-analysis", model="j-hartmann/emotion-english-distilroberta-base"
+        )
         logger.info("Model loaded successfully!")
 
     def analyze(self, text: str) -> tuple[str, float]:
         """Returns (sentiment_label, confidence_score)."""
         try:
-            result = self.classifier(text[:512])[0]  # Truncate to 512 tokens (model limit)
+            result = self.classifier(text[:512])[
+                0
+            ]  # Truncate to 512 tokens (model limit)
             label = result["label"]
             score = result["score"]
             sentiment = LABEL_MAP.get(label.lower(), "NEUTRAL")

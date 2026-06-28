@@ -31,8 +31,9 @@ public class JwtValidationFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
 
-        if (!path.startsWith("/journal") && !path.startsWith("/user") && !path.startsWith("/admin"))
+        if (!path.startsWith("/journal") && !path.startsWith("/user") && !path.startsWith("/admin")) {
             return chain.filter(exchange);
+        }
 
         String authHeader = request.getHeaders().getFirst("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

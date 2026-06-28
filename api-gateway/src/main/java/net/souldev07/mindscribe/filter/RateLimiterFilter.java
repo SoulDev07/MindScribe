@@ -43,9 +43,17 @@ public class RateLimiterFilter implements GlobalFilter, Ordered {
 
         Long count = redisTemplate.opsForValue().increment(key);
 
-        // Set TTL on first request
-        if (count != null && count == 1)
-            redisTemplate.expire(key, Duration.ofSeconds(60));
+        // Ensure TTL is always set properly on creation or if key is missing TTL
+        if (count != null) {
+            if (count == 1) {
+                redisTemplate.expire(key, Duration.ofSeconds(60));
+            } else {
+                Long ttl = redisTemplate.getExpire(key);
+                if (ttl != null && ttl == -1) {
+                    redisTemplate.expire(key, Duration.ofSeconds(60));
+                }
+            }
+        }
 
         if (count != null && count > limit) {
             exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
@@ -63,13 +71,21 @@ public class RateLimiterFilter implements GlobalFilter, Ordered {
     }
 
     private String getClientId(ServerWebExchange exchange) {
+        if (exchange == null || exchange.getRequest() == null) {
+            return "unknown";
+        }
         String userId = exchange.getRequest().getHeaders().getFirst("X-User-Id");
-        if (userId != null)
-            return userId;
+        if (userId != null && !userId.trim().isEmpty()) {
+            return userId.trim().replaceAll("[\\r\\n\\t:]", "_");
+        }
 
         if (exchange.getRequest().getRemoteAddress() != null &&
-                exchange.getRequest().getRemoteAddress().getAddress() != null)
-            return exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+                exchange.getRequest().getRemoteAddress().getAddress() != null) {
+            String hostAddress = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+            if (hostAddress != null && !hostAddress.trim().isEmpty()) {
+                return hostAddress.trim();
+            }
+        }
 
         return "unknown";
     }

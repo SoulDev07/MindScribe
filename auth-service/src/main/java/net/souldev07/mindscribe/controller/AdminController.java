@@ -1,6 +1,7 @@
 package net.souldev07.mindscribe.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import net.souldev07.mindscribe.dto.UserResponseDTO;
 import net.souldev07.mindscribe.entity.User;
 import net.souldev07.mindscribe.service.UserService;
 
@@ -22,9 +24,16 @@ public class AdminController {
     private UserService userService;
 
     @GetMapping("/all-users")
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         List<User> users = userService.getAll();
-        return new ResponseEntity<>(users, HttpStatus.OK);
+        List<UserResponseDTO> response = users.stream().map(user -> UserResponseDTO.builder()
+                .id(user.getId() != null ? user.getId().toString() : null)
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .roles(user.getRoles())
+                .sentimentAnalysis(user.isSentimentAnalysis())
+                .build()).collect(Collectors.toList());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/create-admin-user")

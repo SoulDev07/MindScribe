@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,17 +22,23 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @PutMapping
     public ResponseEntity<?> updateUser(@RequestBody User user) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
         User userInDB = userService.findByUsername(username);
-        if (userInDB == null)
+        if (userInDB == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
 
         userInDB.setUsername(user.getUsername());
-        userInDB.setPassword(user.getPassword());
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            userInDB.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         userInDB.setEmail(user.getEmail());
         userInDB.setSentimentAnalysis(user.isSentimentAnalysis());
 

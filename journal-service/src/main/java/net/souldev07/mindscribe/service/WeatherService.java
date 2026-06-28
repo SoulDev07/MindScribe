@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -18,8 +19,11 @@ import net.souldev07.mindscribe.constants.Placeholders;
 @Slf4j
 public class WeatherService {
 
-    @Value("${weather.api.key}")
+    @Value("${weather.api.key:}")
     private String apiKey;
+
+    @Value("${weather.cache.ttl:300}")
+    private Long weatherCacheTtl;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -34,12 +38,19 @@ public class WeatherService {
     @Retry(name = "weatherApiRetry")
     public WeatherResponse getWeather(String city) {
         WeatherResponse cached = redisService.get("weather_of_" + city, WeatherResponse.class);
-        if (cached != null)
+        if (cached != null) {
             return cached;
+        }
 
-        String weatherApiUrl = appCache.appCache.get(AppCache.keys.WEATHER_API.toString());
-        if (weatherApiUrl == null || weatherApiUrl.isEmpty() || apiKey == null || apiKey.isEmpty())
+        String weatherApiUrl = appCache.appCache != null ? appCache.appCache.get(AppCache.Keys.WEATHER_API.toString()) : null;
+        if (!StringUtils.hasText(weatherApiUrl)) {
+            log.warn("Weather API URL is not configured in AppCache");
             return null;
+        }
+        if (!StringUtils.hasText(apiKey)) {
+            log.warn("Weather API key is missing or not configured");
+            return null;
+        }
 
         weatherApiUrl = weatherApiUrl
                 .replace(Placeholders.CITY, city)
@@ -49,8 +60,9 @@ public class WeatherService {
                 weatherApiUrl, HttpMethod.GET, null, WeatherResponse.class);
         WeatherResponse body = response.getBody();
 
-        if (body != null)
-            redisService.set("weather_of_" + city, body, 300L);
+        if (body != null) {
+            redisService.set("weather_of_" + city, body, weatherCacheTtl != null ? weatherCacheTtl : 300L);
+        }
 
         return body;
     }

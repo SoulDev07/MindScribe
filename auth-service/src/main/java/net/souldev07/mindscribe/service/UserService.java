@@ -1,6 +1,7 @@
 package net.souldev07.mindscribe.service;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,6 @@ import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.souldev07.mindscribe.component.AuditPublisher;
 import net.souldev07.mindscribe.entity.User;
 import net.souldev07.mindscribe.repository.UserRepository;
+import net.souldev07.mindscribe.repository.UserRepositoryImpl;
 
 @Service
 @Slf4j
@@ -25,9 +26,13 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private UserRepositoryImpl userRepositoryImpl;
+
+    @Autowired
     private AuditPublisher auditPublisher;
 
-    private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public boolean saveNewUser(User user) {
         try {
@@ -93,8 +98,8 @@ public class UserService {
                 "USER_DELETED",
                 "SYSTEM",
                 "User",
-                id.toString(),
-                null);
+                id != null ? id.toString() : "",
+                Collections.emptyMap());
     }
 
     public User findByUsername(String username) {
@@ -109,8 +114,12 @@ public class UserService {
                     "USER_DELETED",
                     username,
                     "User",
-                    user.getId().toString(),
-                    null);
+                    user.getId() != null ? user.getId().toString() : "",
+                    Collections.emptyMap());
         }
+    }
+
+    public List<User> getUsersForSentimentAnalysis() {
+        return userRepositoryImpl.getUserForSA();
     }
 }

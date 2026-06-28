@@ -17,11 +17,16 @@ public class RedisService {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     public <T> T get(String key, Class<T> entityClass) {
         try {
             Object o = redisTemplate.opsForValue().get(key);
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(o.toString(), entityClass);
+            if (o == null) {
+                return null;
+            }
+            return objectMapper.readValue(o.toString(), entityClass);
         } catch (Exception e) {
             log.error("Redis GET failed: ", e);
             return null;
@@ -30,8 +35,7 @@ public class RedisService {
 
     public void set(String key, Object o, Long ttl) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            String json = mapper.writeValueAsString(o);
+            String json = objectMapper.writeValueAsString(o);
             redisTemplate.opsForValue().set(key, json, ttl, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("Redis SET failed: ", e);
