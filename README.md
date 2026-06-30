@@ -4,39 +4,35 @@
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2021.0.8-blue.svg)](https://spring.io/projects/spring-cloud)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Python%203.12-009688.svg)](https://fastapi.tiangolo.com/)
 [![HuggingFace](https://img.shields.io/badge/HuggingFace-DistilRoBERTa-yellow.svg)](https://huggingface.co/)
-[![Kafka](https://img.shields.io/badge/Apache%20Kafka-KRaft%203.7.0-red.svg)](https://kafka.apache.org/)
+[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-KRaft%203.7.0-red.svg)](https://kafka.apache.org/)
 [![Redis](https://img.shields.io/badge/Redis-Cache%20%26%20Rate%20Limiter-DC382D.svg)](https://redis.io/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database%20Per%20Service-47A248.svg)](https://www.mongodb.com/)
 
-MindScribe is a polyglot microservices platform built for secure journaling and automated sentiment analysis. It features an event-driven architecture using Apache Kafka, centralized routing with Spring Cloud Gateway, distributed caching and rate limiting with Redis, and AI-based sentiment processing powered by Python and Hugging Face.
+A polyglot microservices platform for secure journaling, event-driven processing, and AI-powered sentiment analysis.
 
 ---
 
-## Architecture Overview
+## Services Architecture
 
-The system consists of seven microservices operating across Java (Spring Boot) and Python (FastAPI):
-
-| Port | Service | Tech Stack | Role |
+| Service | Port | Tech Stack | Description |
 | :--- | :--- | :--- | :--- |
-| `8761` | **Eureka Server** | Spring Cloud Netflix Eureka | Service registration and discovery |
-| `8080` | **API Gateway** | Spring Cloud Gateway, Redis | Gateway routing, JWT verification, token-bucket rate limiting |
-| `8081` | **Auth Service** | Spring Boot, Spring Security, MongoDB | User registration, authentication, JWT issuing, Google OAuth2 |
-| `8082` | **Journal Service** | Spring Boot, MongoDB, Redis, Resilience4j | Journal entry CRUD operations, weather caching, scheduled tasks |
-| `8083` | **Sentiment Service** | Python 3.12, FastAPI, DistilRoBERTa | Real-time sentiment analysis worker |
-| `8084` | **Notification Service** | Spring Boot, Apache Kafka, JavaMailSender | Consumes weekly digest topics and sends summary emails |
-| `8085` | **Audit Service** | Spring Boot, Apache Kafka, MongoDB | Event-sourced audit store tracking platform mutations |
+| `eureka-server` | 8761 | Spring Cloud Eureka | Service discovery and registry |
+| `api-gateway` | 8080 | Spring Cloud Gateway, Redis | Edge routing, JWT validation & token-bucket rate limiting |
+| `auth-service` | 8081 | Spring Boot, MongoDB | Identity management, JWT issuing & Google OAuth2 |
+| `journal-service` | 8082 | Spring Boot, MongoDB, Redis | Core journal CRUD, weather integration & Resilience4j fault tolerance |
+| `sentiment-service` | 8083 | Python 3.12, FastAPI, DistilRoBERTa | Real-time NLP sentiment analysis worker |
+| `notification-service` | 8084 | Spring Boot, Kafka, JavaMail | Asynchronous email dispatch for weekly digests |
+| `audit-service` | 8085 | Spring Boot, Kafka, MongoDB | Immutable event-sourced audit logger |
 
 ---
 
-## Core Capabilities
+## Technical Highlights
 
-- **Authentication & Security**: Stateless JWT authentication, role-based access control (RBAC), and Google OAuth 2.0 integration.
 - **AI Sentiment Analysis**: Asynchronous emotion and sentiment classification using Hugging Face DistilRoBERTa (`sentiment-service`).
-- **Event-Driven Messaging**: Asynchronous event streaming via Apache Kafka (KRaft mode) for audit events and weekly sentiment digests.
+- **Event-Driven Messaging**: Asynchronous inter-service communication via Apache Kafka (KRaft mode).
 - **Audit Logging**: Dedicated `audit-service` storing immutable audit logs in MongoDB.
-- **Gateway Routing & Rate Limiting**: Centralized API routing, CORS handling, and Redis-backed sliding window rate limiting.
-- **Resilience & Circuit Breaking**: Resilience4j circuit breakers protecting inter-service communication and external API integrations.
-- **Service Discovery**: Netflix Eureka for client-side load balancing and dynamic service registration.
+- **Fault Tolerance**: Resilience4j circuit breakers and fallbacks protecting external API and inter-service calls.
+- **Distributed Caching & Rate Limiting**: Redis-backed sliding window rate limiting at the gateway and response caching in services.
 
 ---
 
@@ -44,30 +40,30 @@ The system consists of seven microservices operating across Java (Spring Boot) a
 
 ### Prerequisites
 
-- **Java 8+** (JDK)
-- **Python 3.12+** (with `uv` or `pip`)
-- **Maven 3.8+**
-- **Apache Kafka** (KRaft mode) & **Redis**
-- **MongoDB** (Local instance or MongoDB Atlas)
+- Java 8+
+- Python 3.12+ (with `uv` or `pip`)
+- Maven 3.8+
+- Apache Kafka (KRaft mode) & Redis
+- MongoDB
 
-### Running Services via Automation Script
+### Quickstart
 
-Launch all infrastructure components and microservices with the provided automation script:
+Run all infrastructure components and microservices with the PowerShell script:
 
 ```powershell
 .\run-services.ps1
 ```
 
-### Running Services Manually
+Or start services manually:
 
 ```bash
-# 1. Build parent Maven project
+# 1. Build project
 mvn clean install -DskipTests
 
-# 2. Start Service Registry (Eureka Server)
+# 2. Start Service Registry
 mvn spring-boot:run -pl eureka-server
 
-# 3. Start Python Sentiment Analysis Service
+# 3. Start Sentiment Service
 cd sentiment-service
 uv run uvicorn app.main:app --port 8083 --host 0.0.0.0
 
@@ -83,4 +79,4 @@ mvn spring-boot:run -pl audit-service
 
 ## License
 
-Distributed under the MIT License.
+Distributed under the [MIT License](LICENSE.md).
