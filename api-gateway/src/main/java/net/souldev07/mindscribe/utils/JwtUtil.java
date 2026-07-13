@@ -2,8 +2,6 @@ package net.souldev07.mindscribe.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.crypto.SecretKey;
 
@@ -22,18 +20,6 @@ public class JwtUtil {
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-    }
-
-    public String generateToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        return Jwts.builder()
-                .claims(claims)
-                .subject(username)
-                .header().empty().add("typ", "JWT").and()
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
-                .signWith(getSigningKey())
-                .compact();
     }
 
     public String extractUsername(String token) {

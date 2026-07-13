@@ -22,14 +22,10 @@ import net.souldev07.mindscribe.entity.User;
 import net.souldev07.mindscribe.enums.Sentiment;
 import net.souldev07.mindscribe.model.SentimentData;
 import net.souldev07.mindscribe.repository.JournalEntryRepository;
-import net.souldev07.mindscribe.service.EmailService;
 
 @Component
 @Slf4j
 public class UserScheduler {
-
-    @Autowired
-    private EmailService emailService;
 
     @Autowired
     private JournalEntryRepository journalEntryRepository;
@@ -88,7 +84,6 @@ public class UserScheduler {
                         kafkaTemplate.send("weekly-sentiments", data.getEmail(), data);
                     } catch (Exception kafkaEx) {
                         log.error("Error sending sentiment data to Kafka for user {}: ", user.getEmail(), kafkaEx);
-                        emailService.sendEmail(data.getEmail(), "Sentiment", data.getSentiment());
                     }
                 }
             }

@@ -40,12 +40,6 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
-        <!-- Java Mail Starter -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
-
         <!-- Service Discovery / Eureka Client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

@@ -1,0 +1,15 @@
+**/.git
+**/.gitignore
+**/.idea
+**/.vscode
+**/target
+**/.venv
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache
+**/.ruff_cache
+**/logs
+*.log
+data/
